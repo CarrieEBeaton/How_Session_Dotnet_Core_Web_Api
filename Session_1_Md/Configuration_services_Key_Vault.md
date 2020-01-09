@@ -18,18 +18,13 @@ The Secret Manager is used from a command shell opened to the project's content 
 
 .NET Core CLI  | Copy
 ------|----
-
-
-
     dotnet user-secrets set "{SECRET NAME}" "{SECRET VALUE}"
 Execute the following commands in a command shell from the project's content root to set the secrets for the sample app:
 
 .NET Core CLI  | Copy
 ------|----
-
-
-dotnet user-secrets set "SecretName" "secret_value_1_dev"
-dotnet user-secrets set "Section:SecretName" "secret_value_2_dev"
+    dotnet user-secrets set "SecretName" "secret_value_1_dev"
+    dotnet user-secrets set "Section:SecretName" "secret_value_2_dev"
 When these secrets are stored in Azure Key Vault in the Secret storage in the Production environment with Azure Key Vault section, the _dev suffix is changed to _prod. The suffix provides a visual cue in the app's output indicating the source of the configuration values.
 
 Secret storage in the Production environment with Azure Key Vault
@@ -160,14 +155,14 @@ Enter the vault name into the app's appsettings.json file. The sample app doesn'
 
 Deploy the sample app to Azure App Service.
 
-An app deployed to Azure App Service is automatically registered with Azure AD when the service is created. Obtain the Object ID from the deployment for use in the following command. The Object ID is shown in the Azure portal on the Identity panel of the App Service.
+An app deployed to Azure App Service is automatically registered with Azure AD when the service is created. Obtain the Object ID from the deployment for use in the following command. The Object ID is shown in the Azure portal on the **Identity** panel of the App Service.
 
 Using Azure CLI and the app's Object ID, provide the app with list and get permissions to access the key vault:
 
 azure-cli | Copy
 ------|----
     az keyvault set-policy --name {KEY VAULT NAME} --object-id {OBJECT ID} --secret-permissions get list
-Restart the app using Azure CLI, PowerShell, or the Azure portal.
+**Restart the app using Azure CLI**, PowerShell, or the Azure portal.
 
 The sample app:
 
@@ -178,14 +173,12 @@ The KeyVaultClient instance is used with a default implementation of IKeyVaultSe
 C# | Copy
 ------|----
 
+    // using Microsoft.Azure.KeyVault;
+    // using Microsoft.Azure.Services.AppAuthentication;
+    // using Microsoft.Extensions.Configuration.AzureKeyVault;
 
-Copy
-// using Microsoft.Azure.KeyVault;
-// using Microsoft.Azure.Services.AppAuthentication;
-// using Microsoft.Extensions.Configuration.AzureKeyVault;
-
-public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
-    WebHost.CreateDefaultBuilder(args)
+    public static IWebHostBuilder CreateWebHostBuilder(string[]         args) =>
+      WebHost.CreateDefaultBuilder(args)
         .ConfigureAppConfiguration((context, config) =>
         {
             if (context.HostingEnvironment.IsProduction())
@@ -212,21 +205,20 @@ appsettings.json:
 JSON | Copy
 ------|----
 
-{
-  "KeyVaultName": "Key Vault Name"
-}
+    {
+       "KeyVaultName": "Key Vault Name"
+    }
 When you run the app, a webpage shows the loaded secret values. In the Development environment, secret values have the _dev suffix because they're provided by User Secrets. In the Production environment, the values load with the _prod suffix because they're provided by Azure Key Vault.
 
 If you receive an Access denied error, confirm that the app is registered with Azure AD and provided access to the key vault. Confirm that you've restarted the service in Azure.
 
 For information on using the provider with a managed identity and an Azure DevOps pipeline, see Create an Azure Resource Manager service connection to a VM with a managed service identity.
 
-Use a key name prefix
+## Use a key name prefix
 AddAzureKeyVault provides an overload that accepts an implementation of IKeyVaultSecretManager, which allows you to control how key vault secrets are converted into configuration keys. For example, you can implement the interface to load secret values based on a prefix value you provide at app startup. This allows you, for example, to load secrets based on the version of the app.
 
- Warning
-
-Don't use prefixes on key vault secrets to place secrets for multiple apps into the same key vault or to place environmental secrets (for example, development versus production secrets) into the same vault. We recommend that different apps and development/production environments use separate key vaults to isolate app environments for the highest level of security.
+ >**Warning**:
+>Don't use prefixes on key vault secrets to place secrets for multiple apps into the same key vault or to place environmental secrets (for example, development versus production secrets) into the same vault. We recommend that different apps and development/production environments use separate key vaults to isolate app environments for the highest level of security.
 
 In the following example, a secret is established in the key vault (and using the Secret Manager tool for the Development environment) for 5000-AppSecret (periods aren't allowed in key vault secret names). This secret represents an app secret for version 5.0.0.0 of the app. For another version of the app, 5.1.0.0, a secret is added to the key vault (and using the Secret Manager tool) for 5100-AppSecret. Each app version loads its versioned secret value into its configuration as AppSecret, stripping off the version as it loads the secret.
 
@@ -236,7 +228,7 @@ AddAzureKeyVault is called with a custom IKeyVaultSecretManager:
 C# | Copy
 ------|----
 
-config.AddAzureKeyVault(
+    config.AddAzureKeyVault(
     $"https://{builtConfig["KeyVaultName"]}.vault.azure.net/",
     builtConfig["AzureADApplicationId"],
     certs.OfType<X509Certificate2>().Single(),
@@ -249,8 +241,8 @@ Removes the prefix from the secret name.
 Replaces two dashes in any name with the KeyDelimiter, which is the delimiter used in configuration (usually a colon). Azure Key Vault doesn't allow a colon in secret names.
 C# | Copy
 ------|----
-public class PrefixKeyVaultSecretManager : IKeyVaultSecretManager
-{
+    public class PrefixKeyVaultSecretManager :  IKeyVaultSecretManager
+    {
     private readonly string _prefix;
 
     public PrefixKeyVaultSecretManager(string prefix)
@@ -361,7 +353,7 @@ C#| Copy
 ------|----
 
     Configuration.Reload();
-    
+
 ## Disabled and expired secrets
 Disabled and expired secrets throw a KeyVaultErrorException. To prevent the app from throwing, provide the configuration using a different configuration provider or update the disabled or expired secret.
 
