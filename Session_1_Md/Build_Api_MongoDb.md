@@ -266,7 +266,7 @@ C#   | Copy
 
 In the preceding code, an IReservationtoreDatabaseSettings instance is retrieved from DI via constructor injection. This technique provides access to the appsettings.json configuration values that were added in the Add a configuration model section.
 
-Add the following highlighted code to Startup.ConfigureServices:
+3. Add the following highlighted code to Startup.ConfigureServices:
 
 C#   | Copy
 ------|----
@@ -286,27 +286,26 @@ C#   | Copy
 
 In the preceding code, the ReservationService class is registered with DI to support constructor injection in consuming classes. The singleton service lifetime is most appropriate because ReservationService takes a direct dependency on MongoClient. Per the official Mongo Client reuse guidelines, MongoClient should be registered in DI with a singleton service lifetime.
 
-Add the following code to the top of Startup.cs to resolve the ReservationService reference:
+4. Add the following code to the top of Startup.cs to resolve the ReservationService reference:
 
-C#
+C#   | Copy
+------|----
+    using ReservationApi.Services;
 
-Copy
-using ReservationApi.Services;
 The ReservationService class uses the following MongoDB.Driver members to perform CRUD operations against the database:
 
-MongoClient – Reads the server instance for performing database operations. The constructor of this class is provided the MongoDB connection string:
+* [MongoClient](https://api.mongodb.com/csharp/current/html/T_MongoDB_Driver_MongoClient.htm) – Reads the server instance for performing database operations. The constructor of this class is provided the MongoDB connection string:
 
-C#
+C#   | Copy
+------|----
+    public ReservationService(IReservationtoreDatabaseSettings settings)
+    {
+           var client = new MongoClient(settings.ConnectionString); //copy this line
+           var database = client.GetDatabase(settings.DatabaseName);
 
-Copy
-public ReservationService(IReservationtoreDatabaseSettings settings)
-{
-    var client = new MongoClient(settings.ConnectionString);
-    var database = client.GetDatabase(settings.DatabaseName);
-
-    _Reservation = database.GetCollection<reservation>(settings.ReservationCollectionName);
-}
-IMongoDatabase – Represents the Mongo database for performing operations. This tutorial uses the generic GetCollection<TDocument>(collection) method on the interface to gain access to data in a specific collection. Perform CRUD operations against the collection after this method is called. In the GetCollection<TDocument>(collection) method call:
+          _Reservation = database.GetCollection<reservation>(settings.ReservationCollectionName);
+    }
+[IMongoDatabase](https://api.mongodb.com/csharp/current/html/T_MongoDB_Driver_IMongoDatabase.htm) – Represents the Mongo database for performing operations. This tutorial uses the generic GetCollection<TDocument>(collection) method on the interface to gain access to data in a specific collection. Perform CRUD operations against the collection after this method is called. In the GetCollection<TDocument>(collection) method call:
 
 collection represents the collection name.
 TDocument represents the CLR object type stored in the collection.
@@ -319,83 +318,190 @@ ReplaceOne – Replaces the single document matching the provided search criteri
 Add a controller
 Add a ReservationController class to the Controllers directory with the following code:
 
-C#
+C#   | Copy
+------|----
+    using Microsoft.AspNetCore.Authorization;
+    using Microsoft.AspNetCore.Http;
+    using Microsoft.AspNetCore.Mvc;
+    using Microsoft.Extensions.Configuration;
+    using ReservationApi.Data.Models;
+    using ReservationApi.Services;
+    using Serilog;
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
 
-Copy
-using ReservationApi.Models;
-using ReservationApi.Services;
-using Microsoft.AspNetCore.Mvc;
-using System.Collections.Generic;
+    namespace ReservationApi.Controllers
+    {
 
-namespace ReservationApi.Controllers
-{
+
+    //Session 1
+
+    //Uses the ReservationService class to perform CRUD operations.
+    //Contains action methods to support GET, POST, PUT, and DELETE HTTP requests.
+    //Calls CreatedAtRoute in the Create action method to return an HTTP 201 response.Status 
+    //code 201 is the standard response for an HTTP POST method that creates a new resource on 
+    //the server.CreatedAtRoute also adds a Location header to the response. The Location header 
+    //specifies the URI of the newly created Reservation.
+
+
+
+
+    [Produces("application/json", "application/xml")]
     [Route("api/[controller]")]
     [ApiController]
+    //[Authorize]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status406NotAcceptable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
     public class ReservationController : ControllerBase
     {
-        private readonly ReservationService _ReservationService;
 
-        public ReservationController(ReservationService ReservationService)
+        private readonly ReservationService _reservationService;
+        private readonly IConfiguration _config;
+
+
+        public ReservationController(ReservationService reservationService, IConfiguration config)
         {
-            _ReservationService = ReservationService;
+            _reservationService = reservationService;
+            _config = config;
         }
 
+
+        /// <summary>
+        /// Get all Reservations.
+        /// </summary>
+        /// <response code="200">Returns when the Reservation is found </response>
+        /// <response code="400">If the Reservation is null</response>
+        /// <response code="404">If the Reservation is Not Found</response>
         [HttpGet]
-        public ActionResult<List<reservation>> Get() =>
-            _ReservationService.Get();
-
-        [HttpGet("{id:length(24)}", Name = "Getreservation")]
-        public ActionResult<reservation> Get(string id)
+        //[Authorize]  //Session 3 Identity Server OpenID Connect OAuth Bearer Token
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<Reservation>>> GetAsync()
         {
-            var reservation = _ReservationService.Get(id);
+            var reservations = await _reservationService.GetAsync();
+
+            Log.Information($"In My Reservation the controller:: {reservations} {DateTime.UtcNow}!");
+
+            return reservations;
+        }
+
+
+        /// <summary>
+        /// Get a specific Reservation.
+        /// </summary>
+        /// <param name="id"></param> 
+        /// <response code="200">Returns when the Reservation is found </response>
+        /// <response code="400">If the Reservation is null</response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [HttpGet("{id}", Name = "GetReservation")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<Reservation>> GetAsync(string id)
+        {
+            var reservation = await _reservationService.GetAsync(id);
 
             if (reservation == null)
             {
+                Log.Information($"Reservation for Id:{id} Not Found");
                 return NotFound();
             }
 
-            return reservation;
+            return Ok(reservation);
         }
 
+        /// <summary>
+        /// Create a Reservation.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Reservation 
+        ///     {
+        ///        
+        ///       "Name": "string",
+        ///       "Price": 0,
+        ///       "RoomId": "string",
+        ///       "FromDate": "string",
+        ///       "ToDate": "string"
+        ///     }
+        ///
+        /// </remarks>
+        /// <param name="reservation"></param>
+        /// <returns>A newly created Reservation</returns>
+        /// <response code="201">Returns the newly created Reservation </response>
+        /// <response code="400">If the Reservation is null</response>            
         [HttpPost]
-        public ActionResult<reservation> Create(reservation reservation)
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Reservation>> CreateAsync(Reservation reservation)
         {
-            _ReservationService.Create(reservation);
+            if (reservation == null)
+                return BadRequest("No Reservation supplied");
 
-            return CreatedAtRoute("Getreservation", new { id = reservation.Id.ToString() }, reservation);
+            //if id is passed in with request, empty it so it can be generated by data layer
+            if (!string.IsNullOrEmpty(reservation.Id))
+                reservation.Id = string.Empty;
+
+            var newReservation = await _reservationService.CreateAsync(reservation);
+
+            return CreatedAtRoute("GetReservation", new { id = reservation.Id }, newReservation);
         }
 
-        [HttpPut("{id:length(24)}")]
-        public IActionResult Update(string id, reservation reservationIn)
+        /// <summary>
+        /// Update a specific reservation
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="reservationIn"></param>
+        /// <response code="204">Returns when the Reservation is Succesfully Updated </response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [Consumes("application/json")]
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateAsync(string id, Reservation reservationIn)
         {
-            var reservation = _ReservationService.Get(id);
+            var reservation = await _reservationService.GetAsync(id);
+
+            if (reservation == null)
+            {
+                //status code 404
+                return NotFound();
+            }
+
+            await _reservationService.UpdateAsync(id, reservationIn);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete a specific Reservation.
+        /// </summary>
+        /// <param name="id"></param> 
+        /// <response code="204">Returns when the Reservation is Succesfully Deleted </response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> DeleteAsync(string id)
+        {
+            var reservation = await _reservationService.GetAsync(id);
 
             if (reservation == null)
             {
                 return NotFound();
             }
 
-            _ReservationService.Update(id, reservationIn);
+            await _reservationService.RemoveAsync(reservation.Id);
 
             return NoContent();
-        }
-
-        [HttpDelete("{id:length(24)}")]
-        public IActionResult Delete(string id)
-        {
-            var reservation = _ReservationService.Get(id);
-
-            if (reservation == null)
-            {
-                return NotFound();
             }
-
-            _ReservationService.Remove(reservation.Id);
-
-            return NoContent();
         }
     }
-}
+
 The preceding web API controller:
 
 Uses the ReservationService class to perform CRUD operations.
@@ -406,35 +512,96 @@ Build and run the app.
 
 Navigate to http://localhost:<port>/api/Reservation to test the controller's parameterless Get action method. The following JSON response is displayed:
 
-JSON
-
-Copy
-[
-  {
-    "id":"5bfd996f7b8e48dc15ff215d",
-    "reservationName":"Design Patterns",
-    "price":54.93,
-    "category":"Computers",
-    "author":"Ralph Johnson"
-  },
-  {
-    "id":"5bfd996f7b8e48dc15ff215e",
-    "reservationName":"Clean Code",
-    "price":43.15,
-    "category":"Computers",
-    "author":"Robert C. Martin"
-  }
+JSON  | Copy
+------|----
+    [
+        "Name": "Lisa Love",
+        "Price": 2054.93,
+        "RoomId": "a123Conf",
+        "FromDate": "1/12/2020",
+        "ToDate": "1/20/2020",
+        "Id": "5e14fa52188a05c014258026"
+    },
+    {
+      "Name": "Bob Barker",
+      "Price": 2054.93,
+      "RoomId": "a123Conf",
+      "FromDate": "1/13/2020",
+      "ToDate": "1/17/2020",
+      "Id": "5e151e81dc9288cc603af406"
+     },
 ]
 Navigate to http://localhost:<port>/api/Reservation/{id here} to test the controller's overloaded Get action method. The following JSON response is displayed:
 
-JSON
+JSON  | Copy
+------|----
+    {
+      "Name": "Bob Barker",
+      "Price": 2054.93,
+      "RoomId": "a123Conf",
+      "FromDate": "1/13/2020",
+      "ToDate": "1/17/2020",
+      "Id": "5e151e81dc9288cc603af406"
+     },
+## Configure JSON serialization options
 
-Copy
-{
-  "id":"{ID}",
-  "reservationName":"Clean Code",
-  "price":43.15,
-  "category":"Computers",
-  "author":"Robert C. Martin"
-}
-Configure JSON serialization options
+There are two details to change about the JSON responses returned in the Test the web API section:
+* The property names' default camel casing should be changed to match the Pascal casing of the CLR object's property names.
+* The ReservationName property should be returned as Name.
+
+To satisfy the preceding requirements, make the following changes:
+1. JSON.NET has been removed from ASP.NET shared framework. Add a package reference to Microsoft.AspNetCore.Mvc.NewtonsoftJson.
+
+2. In Startup.ConfigureServices, chain the following highlighted code on to the AddMvc method call:
+
+C#   | Copy
+------|----
+
+    public void ConfigureServices(IServiceCollection services)
+    {
+    services.Configure<ReservationtoreDatabaseSettings>(
+        Configuration.GetSection(nameof(ReservationtoreDatabaseSettings)));
+
+        services.AddSingleton<IReservationtoreDatabaseSettings>(sp =>
+        sp.GetRequiredService<IOptions<ReservationtoreDatabaseSettings>>().Value);
+
+        services.AddSingleton<ReservationService>();
+
+    services.AddControllers()
+        .AddNewtonsoftJson(options => options.UseMemberCasing());
+    }
+With the preceding change, property names in the web API's serialized JSON response match their corresponding property names in the CLR object type. For example, the Reservation class's Author property serializes as Author.
+
+3. In Models/Reservation.cs, annotate the ReservationName property with the following [JsonProperty] attribute:
+
+C#   | Copy
+------|----
+
+
+    [BsonElement("Name")]
+    [JsonProperty("Name")]
+    public string ReservationName { get; set; }
+
+The [JsonProperty] attribute's value of Name represents the property name in the web API's serialized JSON response.
+
+4. Add the following code to the top of Models/Reservation.cs to resolve the [JsonProperty] attribute reference:
+
+C#   | Copy
+------|----
+    using Newtonsoft.Json;
+
+5. Repeat the steps defined in the Test the web API section. Notice the difference in JSON property names.
+
+## Add authentication support to a web API
+
+ASP.NET Core Identity adds user interface (UI) login functionality to ASP.NET Core web apps. To secure web APIs and SPAs, use one of the following:
+* Azure Active Directory
+* Azure Active Directory B2C (Azure AD B2C)]
+* IdentityServer4
+
+IdentityServer4 is an OpenID Connect and OAuth 2.0 framework for ASP.NET Core 3.0. IdentityServer4 enables the following security features:
+* Authentication as a Service (AaaS)
+* Single sign-on/off (SSO) over multiple application types
+* Access control for APIs
+* Federation Gateway
+For more information, see Welcome to [IdentityServer4](http://docs.identityserver.io/en/latest/index.html).
