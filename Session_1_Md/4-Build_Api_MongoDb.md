@@ -608,9 +608,9 @@ For more information, see Welcome to [IdentityServer4](http://docs.identityserve
 
 ## Create Repositories for Data Access
 
-In this section, we will create a repository for encapsulating the MongoDb client functionality.  The `ReservationService` implementation will utilize this repository for data access to mongodb data.
+In this section, we will create a repository for encapsulating the MongoDb client functionality as well as an implementation for EF Core.  The `ReservationService` implementation will utilize these repositories for data access to mongodb data and sql data.
 
-The repository will also implement an interface called  `IRepository<T>` that will be used directly by the service and can be used for mocking out the mongodb client dependency during unit testing.
+The repository will also implement an interface called  `IRepository<T>` that will be used directly by the service and can be used for mocking out the mongodb client or EF Core dependency during unit testing.
 
 ### Create Data project
 
@@ -693,6 +693,17 @@ This project will house the repository interface and the `Reservation` model cla
 This project will house the MongoDb Client SDK and implement the `IRepository<>` interface within the data project
 
 * Create a new .NET Core Class Library project called `ReservationApi.Data.MongoDb` within the solution.
+
+* Add the following nuget references to project file
+
+    ```xml
+    <ItemGroup>
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
+        <PackageReference Include="MongoDB.Driver" Version="2.10.0" />
+    
+    </ItemGroup>
+    ```
 
 * Create the following folder within the project
 
@@ -791,3 +802,172 @@ This project will house the MongoDb Client SDK and implement the `IRepository<>`
     >**NOTE**: This is an extension method to the ServiceCollection DI container for ASP.NET Core.  The ReservationApi webapi project will use this to easily register the MongoDb Repository within DI.
 
 * Make sure to add a reference to the `ReservationApi.Data` project in order to have access to the interface.
+
+### Creating the EF Core repository project
+
+This project will implement access to SQL Server using Entity Framework Core.  This project will utilize the shared Data project for access to the `IRepository<>` interface as well as the `Reservation` model class.
+
+* Create new .NET Core Class Library project called `ReservationApi.Data.EFCore` to the solution and create the following folders
+
+  * **Repos**
+
+  * **DependencyInjection**
+
+  * **Contexts**
+
+* Add the following nuget references to project file
+
+    ```xml
+    <ItemGroup>
+        <PackageReference Include="Microsoft.EntityFrameworkCore" Version="2.2.6" />
+        <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="2.2.6" />
+        <PackageReference Include="Microsoft.Extensions.Configuration" Version="2.2.0" />
+        <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="2.2.0" />
+    </ItemGroup>
+
+    ```
+
+* Add a new class called `EFRepository` to the Repos folder and add the following implementation
+
+    ```cs
+    using Microsoft.EntityFrameworkCore;
+    using ReservationApi.Data.Intefaces;
+    using ReservationApi.Data.Models;
+    using System;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    namespace ReservationApi.Data.EFCore.Repos
+    {
+        public class EFRepository<T> : IRepository<T> where T : BaseEntity
+        {
+            protected readonly DbContext _context;
+            protected DbSet<T> _entities;
+
+            public EFRepository(DbContext context)
+            {
+                _context = context;
+                _entities = context.Set<T>();
+            }
+
+            public async Task DeleteAsync(T entity)
+            {
+                _context.Remove<T>(entity);
+                await _context.SaveChangesAsync();
+            }
+
+            public async Task DeleteAsync(string id)
+            {
+                var entityToDelete = await _entities.FindAsync(id);
+                _context.Remove<T>(entityToDelete);
+                await _context.SaveChangesAsync();
+            }
+
+            public async Task<T> GetAsync(string id)
+            {
+                return await _entities.FindAsync(id);
+            }
+
+            public async Task<List<T>> GetAsync()
+            {
+                return await _entities.ToListAsync();
+            }
+
+            public async Task<T> InsertAsync(T entity)
+            {
+                if (entity == null)
+                    throw new ArgumentNullException(nameof(entity), "entity cannot be null");
+
+                entity.Id = Guid.NewGuid().ToString();
+
+                var newEntity = await _entities.AddAsync(entity);
+                await _context.SaveChangesAsync();
+                return newEntity.Entity;
+            }
+
+            public async Task UpdateAsync(T entity)
+            {
+                var entityToEdit = _entities.Find(entity.Id);
+
+                if (entityToEdit == null)
+                    throw new ArgumentException($"Couldn't find matching {nameof(T)} with Id={entity.Id}");
+
+                _context.Entry(entityToEdit).CurrentValues.SetValues(entity);
+                await _context.SaveChangesAsync();
+            }
+        }
+    }
+    ```
+
+    >**NOTE**: This is the EF Core implementation of the IRepository<> interface
+
+* Add a new class called `ReservationContext` within the Contexts folder and add the following implementation
+
+    ```cs
+    using Microsoft.EntityFrameworkCore;
+    using ReservationApi.Data.Models;
+
+    namespace ReservationApi.Data.EFCore.Contexts
+    {
+        public class ReservationContext : DbContext
+        {
+            public ReservationContext(DbContextOptions<ReservationContext> options) : base(options) { }
+
+            public DbSet<Reservation> Products { get; set; }
+
+            protected override void OnModelCreating(ModelBuilder modelBuilder)
+            {
+            }
+        }
+    }
+    ```
+
+* Add a new class called `ServiceCollectionExtensions` to the DependencyInjection folder and add the following implementation
+
+    ```cs
+    using Microsoft.EntityFrameworkCore;
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
+    using ReservationApi.Data.EFCore.Contexts;
+    using ReservationApi.Data.EFCore.Repos;
+    using ReservationApi.Data.Intefaces;
+    using ReservationApi.Data.Models;
+
+    namespace ReservationApi.Data.EFCore.DependencyInjection
+    {
+        public static class ServiceCollectionExtensions
+        {
+            public static void AddSqlDatabaseSupport(this IServiceCollection services, IConfiguration configuration)
+            {
+                services.AddDbContext<ReservationContext>(options =>
+                    options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
+
+                services.TryAddScoped<DbContext, ReservationContext>();
+                services.TryAddScoped<IRepository<Reservation>, EFRepository<Reservation>>();
+            }
+        }
+    }
+    ```
+
+    >**NOTE**: This is the extension method for registering SQL Server provider for EF Core within the `ReservationApi` webapi project.
+
+* Use the following commands to create the SQL Server database using LocalDb
+
+  * `Add-Migration 'initial' -project ReservationApi.Data.EFCore`
+  
+    This command will create a new folder within the `ReservationApi.Data.EFCore` project called **migrations** and will create some auto generated migration classes for scaffolding the database
+
+  * `Update-Database`
+
+    This command wll run the 'initial' migration that was just created and create the SQL Server database using the configured connection string within the `ReservationApi` webapi project.
+
+* Add the SQL Server connection string to the WebApi project's `appsetting.development.json` file using the following config
+
+    ```js
+    "ConnectionStrings": {
+        "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=ReservationDb;Trusted_Connection=True;MultipleActiveResultSets=true"
+    }
+    ``` 
+
+    >**NOTE**: This connection string points to the LocalDb instance on the local computer and uses interactive user
