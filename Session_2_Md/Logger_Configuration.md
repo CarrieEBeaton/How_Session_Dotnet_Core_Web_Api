@@ -79,15 +79,15 @@ The following ASP.NET Core example creates a logger with TodoApiSample.Pages.Abo
 
 C#  | Copy
 ----|-----
-public class AboutModel : PageModel
-{
-    private readonly ILogger _logger;
-
-    public AboutModel(ILogger<AboutModel> logger)
+    public class AboutModel : PageModel
     {
-        _logger = logger;
-    }
-The following non-host console app example creates a logger with LoggingConsoleApp.Program as the category.
+       private readonly ILogger _logger;
+
+       public AboutModel(ILogger<AboutModel> logger)
+       {
+           _logger = logger;
+       }
+The following non-host console app example creates a logger with `LoggingConsoleApp.Program` as the category.
 
 C#
 
