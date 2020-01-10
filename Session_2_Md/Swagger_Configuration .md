@@ -157,10 +157,11 @@ XML | Copy
         </PropertyGroup>
 ```
 Enabling XML comments provides debug information for undocumented public types and members. Undocumented types and members are indicated by the warning message. For example, the following message indicates a violation of warning code 1591:
-text | Copy
-----|-----
 
-```text
+text | Copy
+-----|-----
+
+```js
     warning CS1591: Missing XML comment for publicly visible type or member 'TodoController.GetAll()'
 ```
 To suppress warnings project-wide, define a semicolon-delimited list of warning codes to ignore in the project file. Appending the warning codes to $(NoWarn); applies the C# default values too.
