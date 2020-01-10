@@ -616,13 +616,13 @@ The repository will also implement an interface called  `IRepository<T>` that wi
 
 This project will house the repository interface and the `Reservation` model class.  It is meant to be shared between other repository implementations.
 
-- Create new .NET Core Class Library project and add the following folders.
+* Create new .NET Core Class Library project and add the following folders.
 
-    - **Interfaces**
+  * **Interfaces**
 
-    - **Models**
+  * **Models**
 
-- Add a new class called `BaseEntity` to the Models folder and add the following implementation.
+* Add a new class called `BaseEntity` to the Models folder and add the following implementation.
 
     ```cs
     using MongoDB.Bson.Serialization.Attributes;
@@ -641,7 +641,7 @@ This project will house the repository interface and the `Reservation` model cla
 
     >**NOTE**: This will be the base class that can be shared across other entities/models in the domain
 
-- Add a new class called `IRepository` to the Interfaces folder and add the following implementation
+* Add a new class called `IRepository` to the Interfaces folder and add the following implementation
 
     ```cs
     using ReservationApi.Data.Models;
@@ -662,7 +662,7 @@ This project will house the repository interface and the `Reservation` model cla
     }
     ```
 
-- Add a new class called `Reservation` to the Models folder and add the following implementation
+* Add a new class called `Reservation` to the Models folder and add the following implementation
 
     ```cs
     using MongoDB.Bson.Serialization.Attributes;
@@ -687,3 +687,107 @@ This project will house the repository interface and the `Reservation` model cla
     ```
 
     >**NOTE**: This entity inherits from the `BaseEntity` which provides the id property
+
+### Create MongoDb Repository project
+
+This project will house the MongoDb Client SDK and implement the `IRepository<>` interface within the data project
+
+* Create a new .NET Core Class Library project called `ReservationApi.Data.MongoDb` within the solution.
+
+* Create the following folder within the project
+
+  * **Repos**
+
+  * **DependencyInjection**
+
+* Create a new class called `MongoRepository` within the Repos folder and add the following implementation.
+
+  ```cs
+    using MongoDB.Driver;
+    using ReservationApi.Data.Intefaces;
+    using ReservationApi.Data.Models;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    namespace ReservationApi.Data.MongoDb.Repos
+    {
+        public class MongoRepository<T> : IRepository<T> where T : BaseEntity
+        {
+            private readonly IMongoCollection<T> _collection;
+
+            public MongoRepository(IMongoCollection<T> collection)
+            {
+                _collection = collection;
+            }
+            public async Task DeleteAsync(T entity)
+            {
+                await _collection.DeleteOneAsync(x => x.Id == entity.Id);
+            }
+
+            public async Task DeleteAsync(string id)
+            {
+                await _collection.DeleteOneAsync(x => x.Id == id);
+            }
+
+            public async Task<T> GetAsync(string id)
+            {
+                return await _collection.Find<T>(book => book.Id == id).FirstOrDefaultAsync();
+            }
+
+            public async Task<List<T>> GetAsync()
+            {
+                return await _collection.Find(reservation => true).ToListAsync();
+            }
+
+            public async Task<T> InsertAsync(T entity)
+            {
+                await _collection.InsertOneAsync(entity);
+                return entity;
+            }
+
+            public async Task UpdateAsync(T entity)
+            {
+                await _collection.ReplaceOneAsync(book => book.Id == entity.Id, entity);
+            }
+        }
+    }
+    ```
+
+    >**NOTE**: This is the implementation of the `IRepository<>` interface that will be used within the Service project.
+
+* Create a new class called `ServiceCollectionExtensions` within the DependencyInjection folder and add the following implementation.
+
+    ```cs
+    using Microsoft.Extensions.Configuration;
+    using Microsoft.Extensions.DependencyInjection;
+    using Microsoft.Extensions.DependencyInjection.Extensions;
+    using MongoDB.Driver;
+    using ReservationApi.Data.Intefaces;
+    using ReservationApi.Data.Models;
+    using ReservationApi.Data.MongoDb.Repos;
+
+    namespace ReservationApi.Data.MongoDb.DependencyInjection
+    {
+        public static class ServiceCollectionExtensions
+        {
+            public static void AddMongoDatabaseSupport(this IServiceCollection services, IConfiguration configuration)
+            {
+                services.AddScoped<IMongoCollection<Reservation>>(sp =>
+                {
+                    var config = configuration.GetSection("ReservationDataBaseSettings");
+
+                    var client = new MongoClient(config["ConnectionString"]);
+                    var database = client.GetDatabase(config["DatabaseName"]);
+
+                    return database.GetCollection<Reservation>(config["ReservationCollectionName"]);
+                });
+
+                services.TryAddScoped<IRepository<Reservation>, MongoRepository<Reservation>>();
+            }
+        }
+    }
+    ```
+
+    >**NOTE**: This is an extension method to the ServiceCollection DI container for ASP.NET Core.  The ReservationApi webapi project will use this to easily register the MongoDb Repository within DI.
+
+* Make sure to add a reference to the `ReservationApi.Data` project in order to have access to the interface.
