@@ -605,3 +605,85 @@ IdentityServer4 is an OpenID Connect and OAuth 2.0 framework for ASP.NET Core 3.
 * Access control for APIs
 * Federation Gateway
 For more information, see Welcome to [IdentityServer4](http://docs.identityserver.io/en/latest/index.html).
+
+## Create Repositories for Data Access
+
+In this section, we will create a repository for encapsulating the MongoDb client functionality.  The `ReservationService` implementation will utilize this repository for data access to mongodb data.
+
+The repository will also implement an interface called  `IRepository<T>` that will be used directly by the service and can be used for mocking out the mongodb client dependency during unit testing.
+
+### Create Data project
+
+This project will house the repository interface and the `Reservation` model class.  It is meant to be shared between other repository implementations.
+
+- Create new .NET Core Class Library project and add the following folders.
+
+    - **Interfaces**
+
+    - **Models**
+
+- Add a new class called `BaseEntity` to the Models folder and add the following implementation.
+
+    ```cs
+    using MongoDB.Bson.Serialization.Attributes;
+    using MongoDB.Bson.Serialization.IdGenerators;
+
+    namespace ReservationApi.Data.Models
+    {
+        public abstract class BaseEntity
+        {
+            [BsonId]
+            [BsonRepresentation(MongoDB.Bson.BsonType.ObjectId)]
+            public string Id { get; set; }
+        }
+    }
+    ```
+
+    >**NOTE**: This will be the base class that can be shared across other entities/models in the domain
+
+- Add a new class called `IRepository` to the Interfaces folder and add the following implementation
+
+    ```cs
+    using ReservationApi.Data.Models;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    namespace ReservationApi.Data.Intefaces
+    {
+        public interface IRepository<T> where T : BaseEntity
+        {
+            Task DeleteAsync(T entity);
+            Task DeleteAsync(string id);
+            Task<T> GetAsync(string id);
+            Task<List<T>> GetAsync();
+            Task<T> InsertAsync(T entity);
+            Task UpdateAsync(T entity);
+        }
+    }
+    ```
+
+- Add a new class called `Reservation` to the Models folder and add the following implementation
+
+    ```cs
+    using MongoDB.Bson.Serialization.Attributes;
+    using Newtonsoft.Json;
+    using System.ComponentModel.DataAnnotations;
+
+    namespace ReservationApi.Data.Models
+    {
+        public class Reservation : BaseEntity
+        {
+            [JsonProperty("Name")]
+            [BsonElement("Name")]
+            [MaxLength(150)]
+            public string Name { get; set; }
+
+            public decimal Price { get; set; }
+            public string RoomId { get; set; }
+            public string FromDate { get; set; }
+            public string ToDate { get; set; }
+        }
+    }
+    ```
+
+    >**NOTE**: This entity inherits from the `BaseEntity` which provides the id property
