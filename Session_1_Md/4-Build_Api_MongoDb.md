@@ -971,3 +971,71 @@ This project will implement access to SQL Server using Entity Framework Core.  T
     ``` 
 
     >**NOTE**: This connection string points to the LocalDb instance on the local computer and uses interactive user
+
+## Configure WebApi to use Repositories
+
+In this section, we'll add project references to the `ReservationApi` webapi project and configure the project to use either the MongoDb or EF Core repositories.  We'll then update the `ReservationService` class to inject the new `IRepository<>` implementation of choice.
+
+* Add the following project reference to the `ReservationApi` project file
+
+    ```xml
+    <ItemGroup>
+        <ProjectReference Include="..\ReservationApi.Data.EFCore\ReservationApi.Data.EFCore.csproj" />
+        <ProjectReference Include="..\ReservationApi.Data.MongoDb\ReservationApi.Data.MongoDb.csproj" />
+        <ProjectReference Include="..\ReservationApi.Data\ReservationApi.Data.csproj" />
+    </ItemGroup>
+    ```
+
+* Update the `ReservationService` implementation to the following
+
+    ```cs
+    using ReservationApi.Data.Intefaces;
+    using ReservationApi.Data.Models;
+    using System.Collections.Generic;
+    using System.Threading.Tasks;
+
+    namespace ReservationApi.Services
+    {
+        public class ReservationService : IReservationService
+        {
+            private readonly IRepository<Reservation> _repo;
+
+            public ReservationService(IRepository<Reservation> repo)
+            {
+                _repo = repo;
+            }
+
+            public async Task<List<Reservation>> GetAsync() =>
+            await _repo.GetAsync();
+
+            public async Task<Reservation> GetAsync(string id) =>
+                await _repo.GetAsync(id);
+
+            public async Task<Reservation> CreateAsync(Reservation reservation)
+            {
+                await _repo.InsertAsync(reservation);
+                return reservation;
+            }
+
+            public async Task UpdateAsync(string id, Reservation reservationIn) =>
+                await _repo.UpdateAsync(reservationIn);
+
+            public async Task RemoveAsync(Reservation reservationIn) =>
+                await _repo.DeleteAsync(reservationIn);
+
+            public async Task RemoveAsync(string id) =>
+                await _repo.DeleteAsync(id);
+        }
+    }
+    ```
+
+    >**NOTE**: This implementation receives an injected `IRepository<Reservation>` instance, could be MongoDb could be EFCore, and uses this to access the appropriate data store.
+
+* Register either the MongoDb repo or EFCore repo with the `ReservationApi` project by adding the following code to the `ConfigureServices()` method within the `Startup` class.
+
+    ```cs
+        //services.AddSqlDatabaseSupport(Configuration);
+        services.AddMongoDatabaseSupport(Configuration);
+    ```
+
+    >**NOTE**: This snippet of code registers the MongoDb repo, but has a commented out line for the EFCore repo.
