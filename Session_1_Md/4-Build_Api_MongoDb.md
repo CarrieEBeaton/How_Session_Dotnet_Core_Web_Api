@@ -141,6 +141,7 @@ The reservationName property is annotated with the [BsonElement] attribute. The 
 JSON  | Copy
 ------|----
 
+```cs
         {
             "ReservationtoreDatabaseSettings": {
             "ReservationCollectionName": "Reservation",
@@ -161,6 +162,8 @@ JSON  | Copy
        }
       }
     }
+```
+
 2. Add a ReservationtoreDatabaseSettings.cs file to the Models directory with the following code:
 
 

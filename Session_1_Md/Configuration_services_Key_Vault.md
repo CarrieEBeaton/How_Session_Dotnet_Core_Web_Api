@@ -370,7 +370,31 @@ When the app fails to load configuration using the provider, an error message is
 - When adding the access policy for the app to the key vault, the - policy was created, but the Save button wasn't selected in the - Access policies UI.
 
 
-1. Add Key store to to the CreateWebHostBuilder
+# Configure Key Vault with Certificate 
+
+1. [Create a PKCS#12 archive (.pfx) certificate](https://docs.microsoft.com/en-us/azure/cosmos-db/certificate-based-authentication). Options for creating certificates include MakeCert on Windows and OpenSSL.
+
+        PS C:\WINDOWS\system32>   $cert = New-SelfSignedCertificate -CertStoreLocation "Cert:\CurrentUser\My" -Subject "CN=ResApiCert" -KeySpec KeyExchange
+
+2. Install the certificate into the current user's personal certificate store. Marking the key as exportable is optional. Note the certificate's thumbprint, which is used later in this process.
+3. Export the PKCS#12 archive (.pfx) certificate as a DER-encoded certificate (.cer).
+4. Register the app with Azure AD (App registrations).
+5. [Upload the DER-encoded certificate](https://ms.portal.azure.com/#blade/Microsoft_AAD_RegisteredApps/ApplicationMenuBlade/Credentials/appId/773c9fa3-d262-463d-aa96-38949fe76960/isMSAApp/) (.cer) to Azure AD:  
+    1. Select the app in Azure AD.
+    2. Navigate to **Certificates & secrets**.
+    3. Select Upload certificate to upload the certificate, which contains the public key. A .cer, .pem, or .crt certificate is acceptable.
+6. Store the key vault name, Application ID, and certificate thumbprint in the app's appsettings.json file.
+7. Navigate to [Key vaults in the Azure portal](https://ms.portal.azure.com/#@microsoft.onmicrosoft.com/resource/subscriptions/6738d774-0014-4ded-842b-327158c8b568/resourceGroups/key-vault-demo0101/providers/Microsoft.KeyVault/vaults/key-vault-demo0101-kv/access_policies).
+8. Select the key vault that you created in the Secret storage in the Production environment with Azure Key Vault section.
+9. Select Access policies.
+10. Select Add Access Policy.
+11. Open Secret permissions and provide the app with Get and List permissions.
+12. Select Select principal and select the registered app by name. Select the Select button.
+13. Select OK.
+14. Select Save.
+15. Deploy the app.
+
+16. Add Key store to to the CreateWebHostBuilder
 
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
@@ -401,3 +425,9 @@ When the app fails to load configuration using the provider, an error message is
                 })
                 .UseStartup<Startup>()
                 .UseSerilog();
+
+17.Add Secret for Monogdb connection string to KeyVault  
+
+        Name:  ReservationDataBaseSettings--ConnectionString Value: mongodb://localhost:27017
+
+
