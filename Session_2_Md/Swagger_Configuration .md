@@ -13,7 +13,7 @@ Visual Studio
 
 PowerShell | Copy
 ----|-----
-        Install-Package Swashbuckle.AspNetCore -Version 5.0.0-rc5
+        Install-Package Swashbuckle.AspNetCore -Version 4.0.1
 -  From the Manage NuGet Packages dialog:
 
 - Right-click the project in Solution Explorer > Manage NuGet Packages
@@ -23,8 +23,10 @@ PowerShell | Copy
 - Select the latest "Swashbuckle.AspNetCore" package from the Browse tab and click Install
 ## Add and configure Swagger middleware
 In the Startup class, import the following namespace to use the OpenApiInfo class:
-C# | Copy
+
+C#  | Copy
 ----|-----
+
 ```cs
         using Microsoft.OpenApi.Models;
 ```
