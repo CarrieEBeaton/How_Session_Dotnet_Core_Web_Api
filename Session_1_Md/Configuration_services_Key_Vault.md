@@ -368,3 +368,36 @@ When the app fails to load configuration using the provider, an error message is
 - The app has the wrong key vault name (KeyVaultName), Azure AD - Application Id (AzureADApplicationId), or Azure AD certificate - thumbprint (AzureADCertThumbprint).
 - The configuration key (name) is incorrect in the app for the value - you're trying to load.
 - When adding the access policy for the app to the key vault, the - policy was created, but the Save button wasn't selected in the - Access policies UI.
+
+
+1. Add Key store to to the CreateWebHostBuilder
+
+        public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
+            WebHost.CreateDefaultBuilder(args)
+                .ConfigureAppConfiguration((context, config) =>
+                {
+
+                    //Toggle for development and production 
+                    if (context.HostingEnvironment.IsProduction())
+                    {
+                        var builtConfig = config.Build();
+
+                        using (var store = new X509Store(StoreName.My, StoreLocation.CurrentUser))
+                        {
+                            store.Open(OpenFlags.ReadOnly);
+                            var certs = store.Certificates
+                                .Find(X509FindType.FindByThumbprint,
+                                    builtConfig["AzureADCertThumbprint"], false);
+
+                            config.AddAzureKeyVault(
+                                $"https://{builtConfig["KeyVaultName"]}.vault.azure.net/",
+                                builtConfig["AzureADApplicationId"],
+                                certs.OfType<X509Certificate2>().Single());
+
+                            store.Close();
+
+                        }
+                    }
+                })
+                .UseStartup<Startup>()
+                .UseSerilog();
