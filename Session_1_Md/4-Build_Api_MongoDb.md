@@ -39,7 +39,7 @@ Copy
 db.Reservation.insertMany([{'RoomId':'rmconf1234','Price':1540.93,'Category':'Computers','ReservationName':'Ralph Johnson'}, {'RoomId':'rmking1234','Price':143.15,'Category':'Computers','ReservationName':'Robert C. Martin'}])
 7. The following result is displayed:
 
-    ```json
+    ```js
     {
          "acknowledged" : true,
         "insertedIds" : [
@@ -58,7 +58,7 @@ db.Reservation.insertMany([{'RoomId':'rmconf1234','Price':1540.93,'Category':'Co
         
 The following result is displayed:
 
-    ```json
+    ```js
     {
         "_id" : ObjectId("5bfd996f7b8e48dc15ff215d"),
         "Name" : "Design Patterns",
@@ -106,7 +106,7 @@ Install-Package MongoDB.Driver -Version {VERSION} |
 JSON  | Copy
 ------|----
 
-```json
+```js
         {
             "ReservationtoreDatabaseSettings": {
             "ReservationCollectionName": "Reservation",
