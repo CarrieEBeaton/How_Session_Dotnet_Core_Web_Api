@@ -299,19 +299,22 @@ Copyright &copy; 2019 Serilog Contributors - Provided under the [Apache License,
 See also: [Serilog Documentation](https://github.com/serilog/serilog/wiki)
 
  1. Install Serilog Nuget Package.
-
+   
+         ```xml
         <PackageReference Include="Serilog.AspNetCore" Version="3.2.0" />
         <PackageReference Include="Serilog.Sinks.ApplicationInsights" Version="3.0.4" />
         <PackageReference Include="Serilog.Sinks.Console" Version="3.1.1" />
 
  2. Add Usings:
 
+         ```cs
         using Serilog;
         using Serilog.Events;
 
 
 3. Add Configuration to Program class
 
+        ```cs
         public static IConfiguration Configuration { get; } = new ConfigurationBuilder()
            .SetBasePath(System.IO.Directory.GetCurrentDirectory())
            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
@@ -324,7 +327,8 @@ See also: [Serilog Documentation](https://github.com/serilog/serilog/wiki)
 
 
 4. Add Logger to Main
-
+       
+        ```cs
         var _appInsightConfiguration = new TelemetryConfiguration() { InstrumentationKey = Configuration["InstrumentationKey"] };
             Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Debug()
@@ -343,6 +347,7 @@ See also: [Serilog Documentation](https://github.com/serilog/serilog/wiki)
          Log.Information($"Application started using Serilog for logging{DateTime.Now} UTC {DateTime.UtcNow}");
 5. Add Serilog to the CreateWebHostBuilder Method 
 
+        ```cs
         public static IWebHostBuilder CreateWebHostBuilder(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
                 .UseStartup<Startup>()
@@ -350,5 +355,6 @@ See also: [Serilog Documentation](https://github.com/serilog/serilog/wiki)
 
 6. Add Serilog Request Logs in Startup Configure Method.
 
+         ```cs
         app.UseSerilogRequestLogging();
            
