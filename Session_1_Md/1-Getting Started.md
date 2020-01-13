@@ -31,7 +31,7 @@ ASP.NET Core provides the following benefits:
 
 ## Create New Project
 
-Create a new ASP.NET Core 3.x project using the target tool of choice.  Have a discussion with customer on what tooling they'd like to work with and be consistent during your sessions.
+Create a new ASP.NET Core 2.2 project using the target tool of choice.  Have a discussion with customer on what tooling they'd like to work with and be consistent during your sessions.
 
 > NOTE: You can allow customer to use any tools they wish if you are comfortable supporting this scenario
 
@@ -58,9 +58,9 @@ Discuss how ASP.NET Core is hosted and what scenarios different hosts can be uti
 
 - Lifetime Management
 
-- [Generic Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host?view=aspnetcore-3.0)
+- [Web Host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/configuration/?view=aspnetcore-2.2)
 
-- `CreateDefaultBuilder` and `ConfigureWebHostDefaults` for [commonly configured host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/generic-host?view=aspnetcore-3.0#default-builder-settings)
+- `CreateDefaultBuilder` and `ConfigureWebHostDefaults` for [commonly configured host](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/host/web-host?view=aspnetcore-2.2)
 
 ### The StartUp Class
 

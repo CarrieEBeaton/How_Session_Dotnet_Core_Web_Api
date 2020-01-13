@@ -29,19 +29,10 @@ From within Visual Studio, create a new .NET Core Class Library project and call
 
     We will store all Service interfaces within this folder
 
-- **Domains**
-
-    Domain specific Services will live here (e.g. `ProductService`)
-
-- **Storage**
-
-    Our Storage Service implementations will live here (e.g. `AzureStorageService`)
-
-### Add Project Reference to Data Project
-
-Make sure to add a reference to the `HOW.AspNetCore.Data` project.  This will provide access to the `HowDataContext` class using Dependency Injection.
-
+- 
 ## Dependency Injection Fundamentals
+
+Open PowerPoint in slides DependenceInjection
 
 - [Reference Doc](https://docs.microsoft.com/en-us/aspnet/core/fundamentals/dependency-injection?view=aspnetcore-3.0#lifetime-and-registration-options)
 
@@ -136,41 +127,47 @@ Finally, we create a new `Index.cshtml` Razor Page that askes for the registered
 The Razor page then displays the Guids for each lifetime object to show the matching/unmatching guid results based on lifetime.
 
 ```cs
-public class IndexModel : PageModel
-{
-    public IndexModel(
-        OperationService operationService,
-        IOperationTransient transientOperation,
-        IOperationScoped scopedOperation,
-        IOperationSingleton singletonOperation,
-        IOperationSingletonInstance singletonInstanceOperation)
+ public class IndexModel : PageModel
     {
-        OperationService = operationService;
-        TransientOperation = transientOperation;
-        ScopedOperation = scopedOperation;
-        SingletonOperation = singletonOperation;
-        SingletonInstanceOperation = singletonInstanceOperation;
+            public IndexModel(
+            OperationService operationService,
+            IOperationTransient transientOperation,
+            IOperationScoped scopedOperation,
+            IOperationSingleton singletonOperation,
+            IOperationSingletonInstance singletonInstanceOperation)
+        {
+            
+            OperationService = operationService;
+            TransientOperation = transientOperation;
+            ScopedOperation = scopedOperation;
+            SingletonOperation = singletonOperation;
+            SingletonInstanceOperation = singletonInstanceOperation;
+        }
+
+        public OperationService OperationService { get; }
+        public IOperationTransient TransientOperation { get; }
+        public IOperationScoped ScopedOperation { get; }
+        public IOperationSingleton SingletonOperation { get; }
+        public IOperationSingletonInstance SingletonInstanceOperation { get; }
+
+        public async Task OnGetAsync()
+        {
+           
+        }
     }
-
-    public OperationService OperationService { get; }
-    public IOperationTransient TransientOperation { get; }
-    public IOperationScoped ScopedOperation { get; }
-    public IOperationSingleton SingletonOperation { get; }
-    public IOperationSingletonInstance SingletonInstanceOperation { get; }
-
-    public void OnGet()
-    {
-
-    }
-}
 ```
 
 ```html
+@page
+@model IndexModel
 @{
-    ViewData["Title"] = "Dependency Injection Sample";
+    ViewData["Title"] = "Home page";
 }
 
-<h1>@ViewData["Title"]</h1>
+<div class="text-center">
+    <h1 class="display-4">Welcome</h1>
+    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+</div>
 
 <div class="row">
     <div class="panel panel-default">
