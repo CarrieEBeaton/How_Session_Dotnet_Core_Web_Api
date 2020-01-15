@@ -26,8 +26,8 @@ First create a directory for the application - then use our template to create a
 Console | Copy
 --------|-----
 ```cmd
-md quickstart
-cd quickstart
+md IdentityServer
+cd IdentityServer
 
 md src
 cd src
@@ -45,7 +45,7 @@ Console | Copy
 --------|-----
 ```cmd
 cd ..
-dotnet new sln -n Quickstart
+dotnet new sln -n IdentityServer
 ```
 and let it add your IdentityServer project (keep this command in mind as we will create other projects below):
 Console | Copy
