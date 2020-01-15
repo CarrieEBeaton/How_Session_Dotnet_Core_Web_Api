@@ -407,7 +407,9 @@ With the preceding change, property names in the web API's serialized JSON respo
 
 In this section, we will create a repository for encapsulating the MongoDb client functionality as well as an implementation for EF Core.  The `ReservationService` implementation will utilize these repositories for data access to mongodb data and sql data.
 
-The repository will also implement an interface called  `IRepository<T>` that will be used directly by the service and can be used for mocking out the mongodb client or EF Core dependency during unit testing.
+The repository will also implement an interface called  `IRepository<T>` that will be used directly by the `ReservationService` and can be used for mocking out the mongodb client or EF Core dependency during unit testing.
+
+The Repository Pattern is proven way to abstract away data access technologies from a consumer, creating an easy and pluggable model for different data access technologies.
 
 ### Create Data project
 
