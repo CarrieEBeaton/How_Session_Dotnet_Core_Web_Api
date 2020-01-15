@@ -168,6 +168,7 @@ services.AddMvc(options =>
 ```
 
 ## Add Startup 
+```cs
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
@@ -232,7 +233,7 @@ namespace ReservationApi
         }
     }
 }
-
+```
 ## Add Controller
 
 using Microsoft.AspNetCore.Mvc;
