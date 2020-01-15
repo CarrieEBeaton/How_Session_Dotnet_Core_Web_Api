@@ -235,7 +235,7 @@ namespace ReservationApi
 }
 ```
 ## Add Controller
-
+```cs
 using Microsoft.AspNetCore.Mvc;
 using ReservationApi.Data.Models;
 using ReservationApi.Services;
@@ -323,6 +323,7 @@ namespace ReservationApi.Controllers
         }
     }
 }
+```
 With the preceding change, property names in the web API's serialized JSON response match their corresponding property names in the CLR object type. For example, the Reservation class's Author property serializes as Author.
 
 1. Repeat the steps defined in the Test the web API section. Notice the difference in JSON property names.
