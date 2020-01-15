@@ -37,17 +37,7 @@ console
 
 Copy
 ```js
-db.Reservation.insertMany([{"Name": "John Jones",
-        "Price": 1254.93,
-        "RoomId": "125Conf",
-        "FromDate": "1/5/2020",
-        "ToDate": "1/8/2020",
-        "Id": "5e14aed709e229d3184ae67e"}, {"Name": "Lisa Love",
-        "Price": 2054.93,
-        "RoomId": "a123Conf",
-        "FromDate": "1/12/2020",
-        "ToDate": "1/20/2020",
-        "Id": "5e14fa52188a05c014258026"}])
+db.Reservation.insertMany([{"Name": "John Jones", "Price": 1254.93,"RoomId": "125Conf","FromDate": "1/5/2020", "ToDate": "1/8/2020", "Id": "5e14aed709e229d3184ae67e"}, {"Name": "Lisa Love", "Price": 2054.93, "RoomId": "a123Conf", "FromDate": "1/12/2020", "ToDate": "1/20/2020", "Id": "5e14fa52188a05c014258026"}])
 ```
 7. The following result is displayed:
 
