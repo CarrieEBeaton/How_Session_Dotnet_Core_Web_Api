@@ -113,28 +113,42 @@ The configuration action passed to the AddSwaggerGen method adds information suc
 C# | Copy
 ----|-----
 ```cs
-        // Register the Swagger generator, defining 1 or more Swagger documents
-        services.AddSwaggerGen(c =>
-        {
-            c.SwaggerDoc("v1", new Info
+        services.AddSwaggerGen(options =>
             {
-                Version = "v1",
-                Title = "ToDo API",
-                Description = "A simple example ASP.NET Core Web API",
-                TermsOfService = new Uri("https://example.com/terms"),
-                Contact = new OpenApiContact
+
+                //Swagger Documentation option
+                options.SwaggerDoc("v1", new Info
                 {
-                    Name = "Shayne Boyer",
-                    Email = string.Empty,
-                    Url = new Uri("https://twitter.com/spboyer"),
-                },
-                License = new OpenApiLicense
-                {
-                    Name = "Use under LICX",
-                    Url = new Uri("https://example.com/license"),
-                }
+                    Title = "MicrosoftDemo API",
+                    Version = "v1",
+                    Description = "Amadeus Api for Training",
+                    Contact = new Contact
+                    {
+                        Email = "timothy.oleson@microsoft.com",
+                        Name = "Tim Oleson",
+                        Url = "https://docs.microsoft.com/en-us/aspnet/core/?view=aspnetcore-2.2"
+                    },
+                    License = new License
+                    {
+                        Name = "MIT License",
+                        Url = "https://opensource.org/licenses/MIT"
+                    }
+                });
+
+                //Include XML comments in you Api Documentation 
+                // Open Project Properties under Build Tab in Output section check xml documentation file change value to ReservationApi
+                //Use Reflection to file name 
+                var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
+
+                //use full path
+                options.IncludeXmlComments(xmlCommentsFullPath);
+                options.DescribeAllEnumsAsStrings();
+                //  options.SchemaFilter<FluentValidationRuleSchemaFilter>();
+                //  options.SchemaFilter<BrowsablePropertySchemaFilter>();
+
+              
             });
-        });
 ```
 The Swagger UI displays the version's information:
 
@@ -214,33 +228,40 @@ C# | Copy
                opt.UseInMemoryDatabase("TodoList"));
            services.AddControllers();
 
-           // Register the Swagger generator, defining 1 or more Swagger documents
-           services.AddSwaggerGen(c =>
-           {
-              c.SwaggerDoc("v1", new OpenApiInfo
-              {
-              Version = "v1",
-                  Title = "ToDo API",
-                  Description = "A simple example ASP.NET Core Web API",
-                  TermsOfService = new Uri("https://example.com/terms"),
-                  Contact = new OpenApiContact
-                  {
-                      Name = "Shayne Boyer",
-                      Email = string.Empty,
-                      Url = new Uri("https://twitter.com/spboyer"),
-                  },
-                  License = new OpenApiLicense
-                  {
-                      Name = "Use under LICX",
-                      Url = new Uri("https://example.com/license"),
-                  }
-              });
+          services.AddSwaggerGen(options =>
+            {
 
-              // Set the comments path for the Swagger JSON and UI.
-              var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
-              var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-              c.IncludeXmlComments(xmlPath);
-          });
+                //Swagger Documentation option
+                options.SwaggerDoc("v1", new Info
+                {
+                    Title = "MicrosoftDemo API",
+                    Version = "v1",
+                    Description = "Amadeus Api for Training",
+                    Contact = new Contact
+                    {
+                        Email = "timothy.oleson@microsoft.com",
+                        Name = "Tim Oleson",
+                        Url = "https://docs.microsoft.com/en-us/aspnet/core/?view=aspnetcore-2.2"
+                    },
+                    License = new License
+                    {
+                        Name = "MIT License",
+                        Url = "https://opensource.org/licenses/MIT"
+                    }
+                });
+
+                //Include XML comments in you Api Documentation 
+                // Open Project Properties under Build Tab in Output section check xml documentation file change value to ReservationApi
+                //Use Reflection to file name 
+                var xmlCommentsFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlCommentsFullPath = Path.Combine(AppContext.BaseDirectory, xmlCommentsFile);
+
+                //use full path
+                options.IncludeXmlComments(xmlCommentsFullPath);
+                options.DescribeAllEnumsAsStrings();
+     
+
+            });
 
 ```          
 In the preceding code, Reflection is used to build an XML file name matching that of the web API project. The AppContext.BaseDirectory property is used to construct a path to the XML file. Some Swagger features `(for example, schemata of input parameters or HTTP methods and response codes from the respective attributes)` work without the use of an XML documentation file. For most features, namely method summaries and the descriptions of parameters and response codes, the use of an XML file is mandatory.
@@ -282,30 +303,30 @@ JSON | Copy
 ----|-----
 
 ```js 
-        "delete": {
-        "tags": [
-        "Todo"
-       ],
-          "summary": "Deletes a specific TodoItem.",
-          "operationId": "ApiTodoByIdDelete",
-          "consumes": [],
-           "produces": [],
-          "parameters": [
-          {
-              "name": "id",
-              "in": "path",
-              "description": "",
-              "required": true,
-              "type": "integer",
-              "format": "int64"
-          }
-       ],
-       "responses": {
-           "200": {
-               "description": "Success"
-           }
-       }
-    }
+      "delete": {
+"tags": [
+"Reservation"
+],
+"summary": "Delete a specific Reservation.",
+"operationId": "DeleteAsync",
+"consumes": [],
+"produces": [
+"application/json",
+"application/xml"
+],
+"parameters": [
+{
+"name": "id",
+"in": "path",
+"description": "",
+"required": true,
+"type": "string"
+}
+],
+"responses": {
+"204": {
+"description": "Returns when the Reservation is Succesfully Deleted"
+}
     
 ```
 Add a <remarks> element to the Create action method documentation. It supplements information specified in the <summary> element and provides a more robust Swagger UI. The <remarks> element content can consist of text, JSON, or XML.
@@ -315,33 +336,43 @@ C# | Copy
 
 ```cs
     /// <summary>
-    /// Creates a TodoItem.
-    /// </summary>
-    /// <remarks>
-    /// Sample request:
-    ///
-    ///     POST /Todo
-    ///     {
-    ///        "id": 1,
-    ///        "name": "Item1",
-    ///        "isComplete": true
-    ///     }
-    ///
-    /// </remarks>
-    /// <param name="item"></param>
-    /// <returns>A newly created TodoItem</returns>
-    /// <response code="201">Returns the newly created item</response>
-    /// <response code="400">If the item is null</response>            
-    [HttpPost]
-    [ProducesResponseType(StatusCodes.Status201Created)]
-    [ProducesResponseType(StatusCodes.Status400BadRequest)]
-    public ActionResult<TodoItem> Create(TodoItem item)
-    {
-        _context.TodoItems.Add(item);
-        _context.SaveChanges();
+        /// Create a Reservation.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Reservation 
+        ///     {
+        ///        
+        ///       "Name": "string",
+        ///       "Price": 0,
+        ///       "RoomId": "string",
+        ///       "FromDate": "string",
+        ///       "ToDate": "string"
+        ///     }
+        ///
+        /// </remarks>
+        /// <param name="reservation"></param>
+        /// <returns>A newly created Reservation</returns>
+        /// <response code="201">Returns the newly created Reservation </response>
+        /// <response code="400">If the Reservation is null</response>            
+        [HttpPost]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Reservation>> CreateAsync(Reservation reservation)
+        {
+            if (reservation == null)
+                return BadRequest("No Reservation supplied");
 
-        return CreatedAtRoute("GetTodo", new { id = item.Id }, item);
-    }
+            //if id is passed in with request, empty it so it can be generated by data layer
+            if (!string.IsNullOrEmpty(reservation.Id))
+                reservation.Id = string.Empty;
+
+            var newReservation = await _reservationService.CreateAsync(reservation);
+
+            return CreatedAtRoute("GetReservation", new { id = reservation.Id }, newReservation);
+        }
 ```
 Notice the UI enhancements with these additional comments:
 
@@ -356,22 +387,19 @@ C# | Copy
 ----|-----
 
 ```cs
-    using System.ComponentModel;
-    using System.ComponentModel.DataAnnotations;
-
-    namespace TodoApi.Models
+    public class Reservation : BaseEntity
     {
-        public class TodoItem
-        {
-            public long Id { get; set; }
 
-            [Required]
-            public string Name { get; set; }
+    [JsonProperty("Name")]
+        [BsonElement("Name")]
+        [MaxLength(150)]
+        [Required]
+        public string Name { get; set; }
 
-            [DefaultValue(false)]
-            public bool IsComplete { get; set; }
-        }
-    }
+        public decimal Price { get; set; }
+        public string RoomId { get; set; }
+        public string FromDate { get; set; }
+        public string ToDate { get; set; }
 ```
 The presence of this attribute changes the UI behavior and alters the underlying JSON schema:
 
@@ -381,23 +409,17 @@ JSON | Copy
 
 ```js
         "definitions": {
-            "TodoItem": {
+            "Reservation": {
                 "required": [
                     "name"
                 ],
                 "type": "object",
                 "properties": {
-                    "id": {
-                        "format": "int64",
-                        "type": "integer"
-                    },
+                    
                     "name": {
                         "type": "string"
                     },
-                    "isComplete": {
-                        "default": false,
-                        "type": "boolean"
-                    }
+                   
                 }
             }
         },
@@ -408,21 +430,34 @@ C#  | Copy
 ----|-----
 
 ```cs
-    [Produces("application/json")]
+    
+    [Produces("application/json", "application/xml")]
     [Route("api/[controller]")]
     [ApiController]
-    public class TodoController : ControllerBase
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status406NotAcceptable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public class ReservationController : ControllerBase
     {
-        private readonly TodoContext _context;
 ```
 
 The Response Content Type drop-down selects this content type as the default for the controller's GET actions:
 
+You and also determine the Cosume Content Type
+```cs
+    [HttpPost]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Reservation>> CreateAsync(Reservation reservation)
+        {
+```
 Swagger UI with default response content type
 
 As the usage of data annotations in the web API increases, the UI and API help pages become more descriptive and useful.
 
-Describe response types
+## Describe response types
 Developers consuming a web API are most concerned with what's returned—specifically response types and error codes (if not standard). The response types and error codes are denoted in the XML comments and data annotations.
 
 The Create action returns an HTTP 201 status code on success. An HTTP 400 status code is returned when the posted request body is null. Without proper documentation in the Swagger UI, the consumer lacks knowledge of these expected outcomes. Fix that problem by adding the highlighted lines in the following example:
@@ -432,33 +467,32 @@ C#  | Copy
 
 ```cs
      /// <summary>
-     /// Creates a TodoItem.
-     /// </summary>
-     /// <remarks>
-     /// Sample request:
-     ///
-     ///     POST /Todo
-     ///     {
-     ///        "id": 1,
-     ///        "name": "Item1",
-     ///        "isComplete": true
-     ///     }
-     ///
-     /// </remarks>
-     /// <param name="item"></param>
-     /// <returns>A newly created TodoItem</returns>
-     /// <response code="201">Returns the newly created item</response>
-     /// <response code="400">If the item is null</response>            
-     [HttpPost]
-     [ProducesResponseType(StatusCodes.Status201Created)]
-     [ProducesResponseType(StatusCodes.Status400BadRequest)]
-     public ActionResult<TodoItem> Create(TodoItem item)
-     {
-         _context.TodoItems.Add(item);
-         _context.SaveChanges();
-
-         return CreatedAtRoute("GetTodo", new { id = item.Id }, item);
-        }
+        /// Create a Reservation.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Reservation 
+        ///     {
+        ///        
+        ///       "Name": "string",
+        ///       "Price": 0,
+        ///       "RoomId": "string",
+        ///       "FromDate": "string",
+        ///       "ToDate": "string"
+        ///     }
+        ///
+        /// </remarks>
+        /// <param name="reservation"></param>
+        /// <returns>A newly created Reservation</returns>
+        /// <response code="201">Returns the newly created Reservation </response>
+        /// <response code="400">If the Reservation is null</response>            
+        [HttpPost]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Reservation>> CreateAsync(Reservation reservation)
+        {
 
 ```
 The Swagger UI now clearly documents the expected HTTP response codes:
@@ -467,6 +501,13 @@ The Swagger UI now clearly documents the expected HTTP response codes:
 Swagger UI showing POST Response Class description 'Returns the newly created Todo item' and '400 - If the item is null' for status code and reason under Response Messages
 
 In ASP.NET Core 2.2 or later, conventions can be used as an alternative to explicitly decorating individual actions with [ProducesResponseType]. For more information, see Use web API conventions.
+
+
+
+
+
+
+
 
 ## Customize the UI
 The stock UI is both functional and presentable. However, API documentation pages should represent your brand or theme. Branding the Swashbuckle components requires adding the resources to serve static files and building the folder structure to host those files.
@@ -532,3 +573,163 @@ HTML | Copy
 <link rel="stylesheet" type="text/css" href="custom.css">
 ```
 Browse to the index.html page at http://localhost:<port>/swagger/ui/index.html. Enter https://localhost:<port>/swagger/v1/swagger.json in the header's textbox, and click the Explore button. The resulting page looks as follows:
+
+
+1. Decorate you controller and Methods like this
+
+```cs
+
+
+namespace ReservationApi.Controllers
+{
+
+ 
+    [Produces("application/json", "application/xml")]
+    [Route("api/[controller]")]
+    [ApiController]
+    [Authorize]
+    [ProducesResponseType(StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(StatusCodes.Status406NotAcceptable)]
+    [ProducesResponseType(StatusCodes.Status500InternalServerError)]
+    public class ReservationController : ControllerBase
+    {
+        private readonly IReservationService _reservationService;
+
+        public ReservationController(IReservationService reservationSvc)
+        {
+            _reservationService = reservationSvc;
+        }
+
+        /// <summary>
+        /// Get all Reservations.
+        /// </summary>
+        /// <response code="200">Returns when the Reservation is found </response>
+        /// <response code="400">If the Reservation is null</response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [HttpGet]
+        [Authorize]  //Session 3 Identity Server OpenID Connect OAuth Bearer Token
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<List<Reservation>>> GetAsync()
+        {
+            var reservations = await _reservationService.GetAsync();
+
+            Log.Information($"In My Reservation the controller:: {reservations} {DateTime.UtcNow}!");
+
+            return reservations;
+        }
+
+
+        /// <summary>
+        /// Get a specific Reservation.
+        /// </summary>
+        /// <param name="id"></param> 
+        /// <response code="200">Returns when the Reservation is found </response>
+        /// <response code="400">If the Reservation is null</response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [HttpGet("{id}", Name = "GetReservation")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        [ProducesResponseType(StatusCodes.Status200OK)]
+        public async Task<ActionResult<Reservation>> GetAsync(string id)
+        {
+            var reservation = await _reservationService.GetAsync(id);
+
+            if (reservation == null)
+            {
+                Log.Information($"Reservation for Id:{id} Not Found");
+                return NotFound();
+            }
+
+            return Ok(reservation);
+        }
+
+        /// <summary>
+        /// Create a Reservation.
+        /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     POST /Reservation 
+        ///     {
+        ///        
+        ///       "Name": "string",
+        ///       "Price": 0,
+        ///       "RoomId": "string",
+        ///       "FromDate": "string",
+        ///       "ToDate": "string"
+        ///     }
+        ///
+        /// </remarks>
+        /// <param name="reservation"></param>
+        /// <returns>A newly created Reservation</returns>
+        /// <response code="201">Returns the newly created Reservation </response>
+        /// <response code="400">If the Reservation is null</response>            
+        [HttpPost]
+        [Consumes("application/json")]
+        [ProducesResponseType(StatusCodes.Status201Created)]
+        [ProducesResponseType(StatusCodes.Status400BadRequest)]
+        public async Task<ActionResult<Reservation>> CreateAsync(Reservation reservation)
+        {
+            if (reservation == null)
+                return BadRequest("No Reservation supplied");
+
+            //if id is passed in with request, empty it so it can be generated by data layer
+            if (!string.IsNullOrEmpty(reservation.Id))
+                reservation.Id = string.Empty;
+
+            var newReservation = await _reservationService.CreateAsync(reservation);
+
+            return CreatedAtRoute("GetReservation", new { id = reservation.Id }, newReservation);
+        }
+
+        /// <summary>
+        /// Update a specific reservation
+        /// </summary>
+        /// <param name="id"></param>
+        /// <param name="reservationIn"></param>
+        /// <response code="204">Returns when the Reservation is Succesfully Updated </response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [Consumes("application/json")]
+        [HttpPut("{id}")]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        public async Task<IActionResult> UpdateAsync(string id, Reservation reservationIn)
+        {
+            var reservation = await _reservationService.GetAsync(id);
+
+            if (reservation == null)
+            {
+                //status code 404
+                return NotFound();
+            }
+
+            await _reservationService.UpdateAsync(id, reservationIn);
+
+            return NoContent();
+        }
+
+        /// <summary>
+        /// Delete a specific Reservation.
+        /// </summary>
+        /// <param name="id"></param> 
+        /// <response code="204">Returns when the Reservation is Succesfully Deleted </response>
+        /// <response code="404">If the Reservation is Not Found</response>
+        [HttpDelete("{id}")]
+        [ProducesResponseType(StatusCodes.Status404NotFound)]
+        [ProducesResponseType(StatusCodes.Status204NoContent)]
+        public async Task<IActionResult> DeleteAsync(string id)
+        {
+            var reservation = await _reservationService.GetAsync(id);
+
+            if (reservation == null)
+            {
+                return NotFound();
+            }
+
+            await _reservationService.RemoveAsync(reservation.Id);
+
+            return NoContent();
+        }
+    }
+}
