@@ -324,6 +324,32 @@ namespace ReservationApi.Controllers
     }
 }
 ```
+
+## Add Service 
+
+```cs 
+using ReservationApi.Data.Models;
+using System.Collections.Generic;
+using System.Threading.Tasks;
+
+namespace ReservationApi.Services
+{
+
+
+    //Session 1
+    public interface IReservationService
+    {
+        Task<Reservation> CreateAsync(Reservation reservation);
+        Task<List<Reservation>> GetAsync();
+        Task<Reservation> GetAsync(string id);
+        Task RemoveAsync(Reservation reservationIn);
+        Task RemoveAsync(string id);
+        Task UpdateAsync(string id, Reservation reservationIn);
+    }
+}
+```
+
+
 With the preceding change, property names in the web API's serialized JSON response match their corresponding property names in the CLR object type. For example, the Reservation class's Author property serializes as Author.
 
 1. Repeat the steps defined in the Test the web API section. Notice the difference in JSON property names.
