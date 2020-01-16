@@ -207,29 +207,26 @@ public class Startup
 {
     public void ConfigureServices(IServiceCollection services)
     {
-        services.AddControllers();
+        services.AddMvc(options => options.EnableEndpointRouting = false);
+            services.AddAuthentication("Bearer")
+                .AddJwtBearer("Bearer", options =>
+                {
+                    options.Authority = "http://localhost:5007";
+                    options.RequireHttpsMetadata = false;
 
-        services.AddAuthentication("Bearer")
-            .AddJwtBearer("Bearer", options =>
-            {
-                options.Authority = "https://localhost:5000";
-                options.RequireHttpsMetadata = false;
-
-                options.Audience = "resapi";
-            });
+                    options.Audience = "resapi";
+                });
     }
 
     public void Configure(IApplicationBuilder app)
     {
-        app.UseRouting();
+       
+            app.UseAuthentication();
+            app.UseAuthorization();
 
-        app.UseAuthentication();
-        app.UseAuthorization();
+            app.UseRouting();
 
-        app.UseEndpoints(endpoints =>
-        {
-            endpoints.MapControllers();
-        });
+            app.UseMvc();
     }
 }
 ```
@@ -267,9 +264,10 @@ Add the IdentityModel NuGet package to your client. This can be done either via 
 Console | Copy
 --------|-----
 ```cmd
-dotnet add package IdentityModel
+dotnet add .\src\Client\Client.csproj package IdentityModel
 ```
 IdentityModel includes a client library to use with the discovery endpoint. This way you only need to know the base-address of IdentityServer - the actual endpoint addresses can be read from the metadata:
+
 C# | Copy
 ---|-----
 ```cs
