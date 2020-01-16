@@ -152,6 +152,7 @@ cd src
 dotnet new web -n Api
 ```
 Then add it to the solution by running the following commands:
+
 Console | Copy
 --------|-----
 ```cmd
@@ -165,6 +166,7 @@ Configure the API application to run on http://localhost:5001 only. You can do t
 ```
 ## The controller
 Add a new class called IdentityController:
+
 C# | Copy
 ---|-----
 ```cs
