@@ -248,6 +248,7 @@ The last step is to write a client that requests an access token, and then uses 
 Console | Copy
 --------|-----
 ```cmd
+cd src
 dotnet new console -n Client
 ```
 Then as before, add it to your solution using:
