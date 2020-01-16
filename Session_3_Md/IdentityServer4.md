@@ -159,10 +159,10 @@ Console | Copy
 cd ..
 dotnet sln add .\src\Api\Api.csproj
 ```
-Configure the API application to run on http://localhost:5001 only. You can do this by editing the launchSettings.json file inside the Properties folder. Change the application URL setting to be:
+Configure the API application to run on https://localhost:5001 only. You can do this by editing the launchSettings.json file inside the Properties folder. Change the application URL setting to be:
 
 ```cmd
-"applicationUrl": "http://localhost:5001"
+"applicationUrl": "https://localhost:5001"
 ```
 ## The controller
 Add a new class called IdentityController:
@@ -212,7 +212,7 @@ public class Startup
         services.AddAuthentication("Bearer")
             .AddJwtBearer("Bearer", options =>
             {
-                options.Authority = "http://localhost:5000";
+                options.Authority = "https://localhost:5000";
                 options.RequireHttpsMetadata = false;
 
                 options.Audience = "resapi";
@@ -244,12 +244,14 @@ Navigating to the controller http://localhost:5001/identity on a browser should 
 
 ## Creating the client
 The last step is to write a client that requests an access token, and then uses this token to access the API. For that, add a console project to your solution, remember to create it in the src:
+
 Console | Copy
 --------|-----
 ```cmd
 dotnet new console -n Client
 ```
 Then as before, add it to your solution using:
+
 Console | Copy
 --------|-----
 ```cmd
@@ -260,6 +262,7 @@ dotnet sln add .\src\Client\Client.csproj
 The token endpoint at IdentityServer implements the OAuth 2.0 protocol, and you could use raw HTTP to access it. However, we have a client library called IdentityModel, that encapsulates the protocol interaction in an easy to use API.
 
 Add the IdentityModel NuGet package to your client. This can be done either via Visual Studio's Nuget Package manager or dotnet CLI:
+
 Console | Copy
 --------|-----
 ```cmd
@@ -271,7 +274,7 @@ C# | Copy
 ```cs
 // discover endpoints from metadata
 var client = new HttpClient();
-var disco = await client.GetDiscoveryDocumentAsync("http://localhost:5000");
+var disco = await client.GetDiscoveryDocumentAsync("https://localhost:5000");
 if (disco.IsError)
 {
     Console.WriteLine(disco.Error);
@@ -279,6 +282,7 @@ if (disco.IsError)
 }
 ```
 Next you can use the information from the discovery document to request a token to IdentityServer to access api1:
+
 C# | Copy
 ---|-----
 
@@ -309,6 +313,7 @@ Copy and paste the access token from the console to jwt.ms to inspect the raw to
 
 ## Calling the API
 To send the access token to the API you typically use the HTTP Authorization header. This is done using the SetBearerToken extension method:
+
 C# | Copy
 ---|-----
 ```cs
