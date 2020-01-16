@@ -273,7 +273,17 @@ C# | Copy
 ---|-----
 ```cs
 // discover endpoints from metadata
-private static async Task Main()
+using IdentityModel.Client;
+using System;
+using System.Threading.Tasks;
+using System.Net.Http;
+using Newtonsoft.Json.Linq;
+
+namespace Client
+{
+    class Program
+    {
+        private static async Task Main()
 
         {
 
