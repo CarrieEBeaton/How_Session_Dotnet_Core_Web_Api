@@ -11,6 +11,7 @@ As with all of these quickstarts you can find the source code for it in the Iden
 
 ## Preparation
 The IdentityServer templates for the dotnet CLI are a good starting point for the quickstarts. To install the templates open a console window and type the following command:
+
 Console | Copy
 --------|-----
 
@@ -23,6 +24,7 @@ They will be used as a starting point for the various tutorials.
 ## Setting up the ASP.NET Core application
 
 First create a directory for the application - then use our template to create an ASP.NET Core application that includes a basic IdentityServer setup, e.g.:
+
 Console | Copy
 --------|-----
 ```cmd
@@ -64,6 +66,7 @@ An API is a resource in your system that you want to protect. Resource definitio
 
 
 For this updatet the Config class - add the following code to it:
+
 C# | Copy
 ---|-----
 ```cs
@@ -72,7 +75,7 @@ public static class Config
     public static IEnumerable<ApiResource> Apis =>
         new List<ApiResource>
         {
-            new ApiResource("api1", "My API")
+            new ApiResource("resapi", "Reservation Api")
         };
 }
 ```
@@ -107,7 +110,7 @@ public static IEnumerable<Client> Clients =>
             },
 
             // scopes that client has access to
-            AllowedScopes = { "api1" }
+            AllowedScopes = { "resapi" }
         }
     };
 
@@ -117,6 +120,7 @@ You can think of the ClientId and the ClientSecret as the login and password for
 ## Configuring IdentityServer
 
 Loading the resource and client definitions happens in Startup.cs - the template already does this for you:
+
 C# | Copy
 ---|-----
 ```cs
@@ -140,9 +144,11 @@ At first startup, IdentityServer will create a developer signing key for you, it
 Next, add an API to your solution.
 
 You can either use the ASP.NET Core Web API template from Visual Studio or use the .NET CLI to create the API project as we do here. Run from within the src folder the following command:
+
 Console | Copy
 --------|-----
 ```cmd
+cd src
 dotnet new web -n Api
 ```
 Then add it to the solution by running the following commands:
