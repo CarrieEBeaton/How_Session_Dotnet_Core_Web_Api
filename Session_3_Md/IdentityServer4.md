@@ -200,6 +200,7 @@ The last step is to add the authentication services to DI (dependency injection)
 - validate that the token is valid to be used with this api (aka audience)
 
 Update Startup to look like this:
+
 C# | Copy
 ---|-----
 ```cs
@@ -272,13 +273,101 @@ C# | Copy
 ---|-----
 ```cs
 // discover endpoints from metadata
-var client = new HttpClient();
-var disco = await client.GetDiscoveryDocumentAsync("https://localhost:5000");
-if (disco.IsError)
-{
-    Console.WriteLine(disco.Error);
-    return;
-}
+private static async Task Main()
+
+        {
+
+            // discover endpoints from metadata
+
+            var client = new HttpClient();
+
+
+
+            var disco = await client.GetDiscoveryDocumentAsync("https://localhost:5007");
+
+            if (disco.IsError)
+
+            {
+
+                Console.WriteLine(disco.Error);
+
+                return;
+
+            }
+
+
+
+            // request token
+
+            TokenResponse tokenResponse = await client.RequestClientCredentialsTokenAsync(new ClientCredentialsTokenRequest
+
+            {
+
+                Address = disco.TokenEndpoint,
+
+                ClientId = "client",
+
+                ClientSecret = "secret",
+
+
+
+                Scope = "resapi"
+
+            });
+
+
+
+            if (tokenResponse.IsError)
+
+            {
+
+                Console.WriteLine(tokenResponse.Error);
+
+                return;
+
+            }
+
+
+
+            Console.WriteLine(tokenResponse.Json);
+
+            Console.WriteLine("\n\n");
+
+
+
+            // call api Building the HttpClient and add the Bear Token
+
+            var apiClient = new HttpClient();
+
+
+            //Set Bearer token on HttpClient 
+            apiClient.SetBearerToken(tokenResponse.AccessToken);
+
+
+            // Use the Http Client to call the Api End Point with the Bearer Token added 
+            var response = await apiClient.GetAsync("https://localhost:5006/api/identity");
+
+            if (!response.IsSuccessStatusCode)
+
+            {
+
+                Console.WriteLine(response.StatusCode);
+
+            }
+
+            else
+
+            {
+
+                var content = await response.Content.ReadAsStringAsync();
+
+                Console.WriteLine(JArray.Parse(content));
+                Console.ReadLine();
+
+
+            }
+
+        }
 ```
 Next you can use the information from the discovery document to request a token to IdentityServer to access api1:
 
